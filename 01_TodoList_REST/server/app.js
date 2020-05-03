@@ -42,6 +42,31 @@ app.get('/findall', (req, res) => {
 			res.status(404).send('not found');
 		});
 });
+
+app.delete('/removeTask/:id', async (req, res) => {
+	try {
+		console.log(req.params.id)
+		const result = await Todo.findOneAndDelete({ _id: req.params.id })
+		res.send(result)
+	} catch (error) {
+		res.send(error)
+	}
+	
+})
+
+app.patch('/updateTask/:id', async (req, res) => {
+	try {
+		console.log(req.params.id)
+		const result = await Todo.findOneAndUpdate({ _id: req.params.id.toString() }, {
+			title: req.body.newTitle,
+			text: req.body.newText
+		})
+		res.send(result)
+
+	} catch (error) {
+		res.send(error)
+	}
+})
 app.listen(20201, () => {
 	console.log('http://localhost:20201');
 });
