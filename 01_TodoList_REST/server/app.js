@@ -1,6 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+
+const uuid = require('./utils/uuid')
 var cors = require('cors');
 var app = express();
 app.use(cors());
@@ -25,7 +27,22 @@ var Schema = new mongoose.Schema(
 		timestamps: true
 	}
 );
+
+var userSchema = new mongoose.Schema(
+	{
+		name: {type:String,unique:true},
+		tokens: [{
+			token:String
+		}]
+	},
+	{
+		timestamps: true
+	}
+);
+
 var Todo = mongoose.model('Todo', Schema);
+var User = mongoose.model('User', userSchema)
+
 app.post('/create', async (req, res) => {
 	const { title, text } = req.body;
 	const newToda = new Todo({ title, text });
@@ -65,6 +82,34 @@ app.patch('/updateTask/:id', async (req, res) => {
 
 	} catch (error) {
 		res.send(error)
+	}
+})
+
+
+app.post('/user', async (req, res) => {
+	try {
+		const { name } = req.body
+		const token = uuid()
+		const tokens = []
+		tokens.push({token})
+		const user = new User({ tokens, name })
+		const result = await user.save()
+		res.send(result)
+	} catch (error) {
+		res.status(401).send(error)
+	}
+})
+
+app.post('/verifyUser', async (req, res) => {
+	try {
+		const { name } = req.body
+		const token = uuid()
+		const user = await User.findOne({ name })
+		user.tokens.push({ token })
+		const result = await user.save()
+		res.send({token})
+	} catch (error) {
+		res.status(404).send(error)
 	}
 })
 app.listen(20201, () => {
