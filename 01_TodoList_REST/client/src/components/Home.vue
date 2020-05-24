@@ -6,9 +6,11 @@
         <li>{{todo.title}}</li>
         <li>{{todo.text}}</li>
         <li>{{todo.createdAt}}</li>
+        <li>作者: {{todo.author}}</li>
         <br />新標題
         <input type="text" v-model="newTitle" />
         <br />新內容
+        <br />
         <input type="text" v-model="newText" />
         <button @click="updateTask(todo._id)">更新此項目</button>
         <br />
@@ -37,9 +39,13 @@ export default {
   },
   methods: {
     removeTask(id) {
-      this.axios.delete(`http://localhost:20201/removeTask/${id}`).then(res => {
-        console.log(res);
-      });
+      this.axios
+        .delete(`http://localhost:20201/removeTask/${id}`, {
+          headers: { token: localStorage.getItem("token") }
+        })
+        .then(res => {
+          console.log(res);
+        });
     },
     updateTask(id) {
       this.axios.patch(`http://localhost:20201/updateTask/${id}`, {

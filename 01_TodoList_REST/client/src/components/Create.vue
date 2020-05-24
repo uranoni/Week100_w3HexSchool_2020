@@ -24,7 +24,7 @@ export default {
         .post("http://localhost:20201/create", {
           title: this.title,
           text: this.text
-        })
+        },{headers:{token:localStorage.getItem('token')}})
         .then(res => console.log(res));
     }
   }

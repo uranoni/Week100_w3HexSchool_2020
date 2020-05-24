@@ -18,6 +18,7 @@ var Schema = new mongoose.Schema(
 	{
 		title: String,
 		text: String,
+		author:String,
 		completed: {
 			type: Boolean,
 			default: false
@@ -45,7 +46,13 @@ var User = mongoose.model('User', userSchema)
 
 app.post('/create', async (req, res) => {
 	const { title, text } = req.body;
-	const newToda = new Todo({ title, text });
+	const { token } = req.headers
+	if (!token) {
+		res.status(401).send('您尚未登入')
+	}
+	const user = await User.findOne({ "tokens.token": token })
+	console.log(user)
+	const newToda = new Todo({ title, text ,author:user.name});
 	const result = await newToda.save();
 	res.send(result);
 });
@@ -62,9 +69,16 @@ app.get('/findall', (req, res) => {
 
 app.delete('/removeTask/:id', async (req, res) => {
 	try {
-		console.log(req.params.id)
+		
+		const { token } = req.headers
+		console.log(token)
+		const todo = await Todo.findOne({ _id: req.params.id.toString() })
+		const user = await User.findOne({ "tokens.token": token })
+		if (todo.author !== user.name) {
+			res.status(401).send('非作者本人')
+		}
 		const result = await Todo.findOneAndDelete({ _id: req.params.id })
-		res.send(result)
+		res.status(200).send(result)
 	} catch (error) {
 		res.send(error)
 	}
