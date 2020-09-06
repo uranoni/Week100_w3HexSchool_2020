@@ -31,6 +31,12 @@ const typeDefs = gql`
 	}
 `;
 const resolvers = {
+	Query: {
+		books: async (parent, { title, author }, { db }) => {
+			const books = await db.find();
+			return books;
+		}
+	},
 	Mutation: {
 		addBook: (parent, { title, author }, { db }) => {
 			const book = new db();
