@@ -29,6 +29,7 @@ const typeDefs = gql`
 	type Mutation {
 		addBook(title: String, author: String): Book
 		updateBook(title: String, author: String): Book
+		deleteBook(title: String): Book
 	}
 `;
 const resolvers = {
@@ -50,8 +51,12 @@ const resolvers = {
 			});
 			return book;
 		},
-		updateBook: async (parent, { title,author }, { db }) => {
-			const book = await db.findOneAndUpdate({author},{title},{new:true});
+		updateBook: async (parent, { title, author }, { db }) => {
+			const book = await db.findOneAndUpdate({ author }, { title }, { new: true });
+			return book;
+		},
+		deleteBook: async (parent, { title, author }, { db }) => {
+			const book = await db.findOneAndRemove({ title });
 			return book;
 		}
 	}
