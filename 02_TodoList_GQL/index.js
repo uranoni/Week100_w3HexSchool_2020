@@ -15,6 +15,10 @@ const BookSchema = new Schema({
 	author: String,
 	title: String
 });
+BookSchema.statics.findBookByTitle = function (title, callback) {
+	// 這裡的 this 指該 collection (Animal)
+	return this.findOne({ title }, callback);
+};
 const BookModel = mongoose.model('BookModel', BookSchema);
 
 //graphql的schema
@@ -25,6 +29,7 @@ const typeDefs = gql`
 	}
 	type Query {
 		books: [Book]
+		findBookByTitle(title: String): Book
 	}
 	type Mutation {
 		addBook(title: String, author: String): Book
@@ -37,6 +42,14 @@ const resolvers = {
 		books: async (parent, { title, author }, { db }) => {
 			const books = await db.find();
 			return books;
+		},
+		findBookByTitle: async (parent, { title }, { db }) => {
+			const result = db.findBookByTitle(title, function (err) {
+				if (err) {
+					return err;
+				}
+			});
+			return result;
 		}
 	},
 	Mutation: {
