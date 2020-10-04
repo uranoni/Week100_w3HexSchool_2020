@@ -1,6 +1,7 @@
 // 必要套件
 const { ApolloServer, gql } = require('apollo-server');
 const mongoose = require('mongoose');
+const cors = require('cors');
 mongoose.connect('mongodb://localhost:27017/book', {
 	useNewUrlParser: true,
 	useUnifiedTopology: true,
@@ -81,7 +82,8 @@ const server = new ApolloServer({
 	context: () => {
 		const db = BookModel;
 		return { db };
-	}
+	},
+	cors: true
 });
 
 // The `listen` method launches a web server.
