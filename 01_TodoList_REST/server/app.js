@@ -1,6 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+
+const uuid = require('./utils/uuid')
 var cors = require('cors');
 var app = express();
 app.use(cors());
@@ -16,6 +18,7 @@ var Schema = new mongoose.Schema(
 	{
 		title: String,
 		text: String,
+		author:String,
 		completed: {
 			type: Boolean,
 			default: false
@@ -25,10 +28,31 @@ var Schema = new mongoose.Schema(
 		timestamps: true
 	}
 );
+
+var userSchema = new mongoose.Schema(
+	{
+		name: {type:String,unique:true},
+		tokens: [{
+			token:String
+		}]
+	},
+	{
+		timestamps: true
+	}
+);
+
 var Todo = mongoose.model('Todo', Schema);
+var User = mongoose.model('User', userSchema)
+
 app.post('/create', async (req, res) => {
 	const { title, text } = req.body;
-	const newToda = new Todo({ title, text });
+	const { token } = req.headers
+	if (!token) {
+		res.status(401).send('您尚未登入')
+	}
+	const user = await User.findOne({ "tokens.token": token })
+	console.log(user)
+	const newToda = new Todo({ title, text ,author:user.name});
 	const result = await newToda.save();
 	res.send(result);
 });
@@ -45,9 +69,16 @@ app.get('/findall', (req, res) => {
 
 app.delete('/removeTask/:id', async (req, res) => {
 	try {
-		console.log(req.params.id)
+		
+		const { token } = req.headers
+		console.log(token)
+		const todo = await Todo.findOne({ _id: req.params.id.toString() })
+		const user = await User.findOne({ "tokens.token": token })
+		if (todo.author !== user.name) {
+			res.status(401).send('非作者本人')
+		}
 		const result = await Todo.findOneAndDelete({ _id: req.params.id })
-		res.send(result)
+		res.status(200).send(result)
 	} catch (error) {
 		res.send(error)
 	}
@@ -67,6 +98,36 @@ app.patch('/updateTask/:id', async (req, res) => {
 		res.send(error)
 	}
 })
+
+
+app.post('/user', async (req, res) => {
+	try {
+		const { name } = req.body
+		const token = uuid()
+		const tokens = []
+		tokens.push({token})
+		const user = new User({ tokens, name })
+		const result = await user.save()
+		res.send(result)
+	} catch (error) {
+		res.status(401).send(error)
+	}
+})
+
+app.post('/verifyUser', async (req, res) => {
+	try {
+		const { name } = req.body
+		const token = uuid()
+		const user = await User.findOne({ name })
+		user.tokens.push({ token })
+		const result = await user.save()
+		res.send({token})
+	} catch (error) {
+		res.status(404).send(error)
+	}
+})
+
+
 app.listen(20201, () => {
 	console.log('http://localhost:20201');
 });
